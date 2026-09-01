@@ -26,13 +26,13 @@ def create_stock_adjustment(
     if not warehouse:
         raise HTTPException(
             status_code=404,
-            detail="Warehouse not found"
+            detail="Warehouse Not Found"
         )
 
     if not product:
         raise HTTPException(
             status_code=404,
-            detail="Product not found"
+            detail="Product Not Found"
         )
 
     new_stock_adjustment = StockAdjustment(
