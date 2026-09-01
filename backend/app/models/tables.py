@@ -48,7 +48,6 @@ class StockBalance(Base):
 
 class PurchaseOrder(Base):
     __tablename__ = "purchase_orders"
-
     id = Column(Integer, primary_key=True, index=True)
     vendor_id = Column(Integer, ForeignKey("vendors.id"), nullable=False)
     warehouse_id = Column(Integer, ForeignKey("warehouses.id"), nullable=False)
@@ -58,7 +57,6 @@ class PurchaseOrder(Base):
 
 class PurchaseOrderItem(Base):
     __tablename__ = "purchase_order_items"
-
     id = Column(Integer, primary_key=True, index=True)
     purchase_order_id = Column(Integer, ForeignKey("purchase_orders.id"), nullable=False)
     product_id = Column(Integer, ForeignKey("products.id"), nullable=False)
@@ -71,18 +69,36 @@ class SalesOrder(Base):
     id = Column(Integer, primary_key=True, index=True)
     customer_ref = Column(String)
     warehouse_id = Column(Integer, ForeignKey("warehouses.id"))
-    status = Column(String, default="Draft")  
+    status = Column(String, default="Draft") 
+    items = relationship("SalesOrderItem", back_populates="sales_order", cascade="all, delete-orphan")
+
+class SalesOrderItem(Base):
+    __tablename__ = "sales_order_items"
+    id = Column(Integer, primary_key=True, index=True)
+    sales_order_id = Column(Integer, ForeignKey("sales_orders.id"))
+    product_id = Column(Integer, ForeignKey("products.id"))
     ordered_qty = Column(Integer, nullable=False)
-    fulfilled_qty = Column(Integer, default=0)
+    shipped_qty = Column(Integer, default=0)
+    sales_order = relationship("SalesOrder", back_populates="items")
 
 class StockTransfer(Base):
     __tablename__ = "stock_transfers"
     id = Column(Integer, primary_key=True, index=True)
-    source_warehouse_id = Column(Integer, ForeignKey("warehouses.id"))
-    dest_warehouse_id = Column(Integer, ForeignKey("warehouses.id"))
-    status = Column(String, default="Pending")
-    qty = Column(Integer, nullable=False)
+    source_warehouse_id = Column(Integer, ForeignKey("warehouses.id"), nullable=False)
+    dest_warehouse_id = Column(Integer, ForeignKey("warehouses.id"), nullable=False)
+    status = Column(String, default="Draft")
+    
+    items = relationship("StockTransferItem", back_populates="stock_transfer")
 
+class StockTransferItem(Base):
+    __tablename__ = "stock_transfer_items"
+    id = Column(Integer, primary_key=True, index=True)
+    transfer_id = Column(Integer, ForeignKey("stock_transfers.id"), nullable=False)
+    product_id = Column(Integer, ForeignKey("products.id"), nullable=False)
+    qty = Column(Integer, nullable=False)
+    
+    stock_transfer = relationship("StockTransfer", back_populates="items")
+    
 class StockAdjustment(Base):
     __tablename__ = "stock_adjustments"
     id = Column(Integer, primary_key=True, index=True)

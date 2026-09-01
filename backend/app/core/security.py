@@ -49,23 +49,38 @@ def create_refresh_token(Data: dict):
     return encoded_jwt
 
 
-def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)):
+def get_current_user(
+    token: str = Depends(oauth2_scheme),
+    db: Session = Depends(get_db)
+):
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Invalid credentials"
     )
+
     try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        user = payload.get("sub")
-        if user is None:
+        payload = jwt.decode(
+            token,
+            SECRET_KEY,
+            algorithms=[ALGORITHM]
+        )
+
+        email = payload.get("sub")
+
+        if email is None:
             raise credentials_exception
+
     except JWTError:
         raise credentials_exception
-        
-    user = db.query(User).filter(User.email == user.email).first()
-    if user is None:
+
+    current_user = db.query(User).filter(
+        User.email == email
+    ).first()
+
+    if current_user is None:
         raise credentials_exception
-    return user
+
+    return current_user
 
 def require_role(allowed_roles: list[str]):
     def role_dependency(current_user: User = Depends(get_current_user)):
