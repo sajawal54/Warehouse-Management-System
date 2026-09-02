@@ -1,13 +1,10 @@
 from fastapi import HTTPException, status, Depends, APIRouter
 from sqlalchemy.orm import Session
-import json
-
 from app.models.tables import Vendor
 from app.schemas.vendors import VendorCreate, VendorResponse, VendorUpdate
 from app.core.database import get_db
 from app.core.security import get_current_user
 from app.services.audit_service import create_audit_log
-
 
 router = APIRouter()
 

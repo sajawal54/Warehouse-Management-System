@@ -1,6 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
-
 from app.core.database import get_db
 from app.core.security import get_current_user
 from app.schemas.sales import SalesOrderCreate, SalesOrderResponse, FulfillSalesOrderRequest
@@ -81,7 +80,7 @@ def fulfill_sales_order(
             detail="Sales order not found"
         )
 
-    if sales_order.status != "Submitted":
+    if sales_order.status not in ["Submitted", "Partially Fulfilled"]:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Only Submitted sales orders can be fulfilled"

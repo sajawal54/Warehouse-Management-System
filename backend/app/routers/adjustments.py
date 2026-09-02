@@ -3,14 +3,14 @@ from sqlalchemy.orm import Session
 from app.models.tables import StockAdjustment, Warehouse, StockBalance, InventoryMovement , Product
 from app.core.database import get_db
 from app.core.security import get_current_user
-from app.schemas.adjustments import StockAdjustmentCreate
+from app.schemas.adjustments import StockAdjustmentCreate , StockAdjustmentResponse
 from app.services.audit_service import create_audit_log
 
 
 router = APIRouter()
 
 
-@router.post("/stock_adjustments/", response_model=StockAdjustmentCreate)
+@router.post("/stock_adjustments/", response_model=StockAdjustmentResponse)
 def create_stock_adjustment(
     stock_adjustment: StockAdjustmentCreate,
     db: Session = Depends(get_db),

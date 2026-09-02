@@ -6,9 +6,7 @@ from app.schemas.inventory import StockReceiveCreate
 from app.models.tables import InventoryMovement, StockBalance, Warehouse, Product
 from app.services.audit_service import create_audit_log
 
-
 router = APIRouter()
-
 
 @router.post("/receive", status_code=status.HTTP_201_CREATED)
 def receive_stock(

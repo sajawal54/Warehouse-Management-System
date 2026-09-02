@@ -14,8 +14,8 @@ class ProductResponse(BaseModel):
   id: int
   sku:str
   name:str
-  category:str
-  unit:str
+  category:Optional[str] = None
+  unit:Optional[str] = None
   reorder_point:int
   unit_cost:float
   is_active:bool = True

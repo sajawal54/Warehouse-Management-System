@@ -1,15 +1,12 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-
-from app.models.tables import StockTransfer, StockTransferItem, Product, Warehouse, StockBalance, InventoryMovement
+from app.models.tables import StockTransfer, StockTransferItem, Product, Warehouse, StockBalance,InventoryMovement
 from app.schemas.stock_transfer import StockTransferCreate, StockTransferResponse
 from app.core.database import get_db
 from app.core.security import get_current_user
 from app.services.audit_service import create_audit_log
 
-
 router = APIRouter()
-
 
 @router.post("/stock_transfers/", response_model=StockTransferResponse)
 def create_stock_transfer(
@@ -83,9 +80,7 @@ def create_stock_transfer(
     )
 
     db.commit()
-
     return new_stock_transfer
-
 
 @router.post("/stock_transfers/{transfer_id}/complete")
 def complete_stock_transfer(
@@ -145,7 +140,7 @@ def complete_stock_transfer(
         ).first()
 
         if dest_stock:
-            dest_stock.qty += item.qty
+            dest_stock.quantity += item.qty
         else:
             dest_stock = StockBalance(
                 product_id=item.product_id,
