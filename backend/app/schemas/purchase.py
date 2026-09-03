@@ -16,7 +16,7 @@ class PurchaseOrderItemResponse(BaseModel):
     product_id: int
     ordered_qty: int
     received_qty: int
-
+    
     class Config:
         from_attributes = True
 

@@ -27,8 +27,8 @@ def hash_password(password: str):
 def verify_password(plain_password: str, hashed_password: str):
     return pwd_context.verify(plain_password, hashed_password)
 
-def create_access_token(Data: dict):
-    to_encode = Data.copy()
+def create_access_token(data: dict):
+    to_encode = data.copy()
     expire = datetime.now(timezone.utc) + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     
     to_encode.update({"exp": expire})
@@ -37,8 +37,8 @@ def create_access_token(Data: dict):
     
     return encoded_jwt
 
-def create_refresh_token(Data: dict):
-    to_encode = Data.copy()
+def create_refresh_token(data: dict):
+    to_encode = data.copy()
     
     expire = datetime.now(timezone.utc) + timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS)
     
@@ -83,7 +83,9 @@ def get_current_user(
     return current_user
 
 def require_role(allowed_roles: list[str]):
-    def role_dependency(current_user: User = Depends(get_current_user)):
+    def role_dependency(
+        current_user: User = Depends(get_current_user)
+    ):
         if current_user.role not in allowed_roles:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
@@ -91,3 +93,24 @@ def require_role(allowed_roles: list[str]):
             )
         return current_user
     return role_dependency
+
+
+require_admin = require_role(["admin"])
+
+require_manager = require_role([
+    "admin",
+    "manager"
+])
+
+require_staff = require_role([
+    "admin",
+    "manager",
+    "staff"
+])
+
+require_viewer = require_role([
+    "admin",
+    "manager",
+    "staff",
+    "viewer"
+])

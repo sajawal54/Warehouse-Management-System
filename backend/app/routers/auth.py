@@ -20,7 +20,7 @@ def register_user(user: UserCreate, db: Session = Depends(get_db)):
   new_user = User(
     username = user.username,
     email=user.email,
-    role=user.role,
+    role="staff",
     password_hash=hashed_password
   )
   
@@ -37,8 +37,8 @@ def login_user(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = D
   if not user or not verify_password(form_data.password, user.password_hash):
     raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid Credentials")
 
-  access_token = create_access_token(Data={"sub": user.email, "role": user.role})
-  refresh_token = create_refresh_token(Data={"sub": user.email})
+  access_token = create_access_token(data={"sub": user.email, "role": user.role})
+  refresh_token = create_refresh_token(data={"sub": user.email})
 
   return {
     "access_token": access_token,
