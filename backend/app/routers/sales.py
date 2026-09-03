@@ -6,9 +6,7 @@ from app.schemas.sales import SalesOrderCreate, SalesOrderResponse, FulfillSales
 from app.models.tables import SalesOrder, SalesOrderItem, StockBalance, InventoryMovement
 from app.services.audit_service import create_audit_log
 
-
 router = APIRouter()
-
 
 @router.post("/sales_orders", response_model=SalesOrderResponse)
 def create_sales_order(
@@ -139,7 +137,7 @@ def fulfill_sales_order(
 
     db.add(movement)
 
-    if all(i.ordered_qty == i.shipped_qty for i in sales_order.items):
+    if all(order.ordered_qty == order.shipped_qty for order in sales_order.items):
         sales_order.status = "Fulfilled"
     else:
         sales_order.status = "Partially Fulfilled"
