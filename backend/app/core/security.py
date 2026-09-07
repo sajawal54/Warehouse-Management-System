@@ -15,11 +15,11 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/login")
 load_dotenv()
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
-SECRET_KEY = os.getenv("SECRET_KEY")
-REFRESH_SECRET_KEY = os.getenv("REFRESH_SECRET_KEY")
+SECRET_KEY = os.getenv("SECRET_KEY") or os.getenv("JWT_SECRET_KEY", "development-access-secret")
+REFRESH_SECRET_KEY = os.getenv("REFRESH_SECRET_KEY") or os.getenv("JWT_REFRESH_SECRET_KEY", "development-refresh-secret")
 ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", 30))
 REFRESH_TOKEN_EXPIRE_DAYS = int(os.getenv("REFRESH_TOKEN_EXPIRE_DAYS", 7))
-ALGORITHM = os.getenv("ALGORITHM", "HS256")
+ALGORITHM = os.getenv("ALGORITHM") or os.getenv("JWT_ALGORITHM", "HS256")
 
 def hash_password(password: str):
     return pwd_context.hash(password)
@@ -74,7 +74,8 @@ def get_current_user(
         raise credentials_exception
 
     current_user = db.query(User).filter(
-        User.email == email
+        User.email == email,
+        User.is_active == True
     ).first()
 
     if current_user is None:

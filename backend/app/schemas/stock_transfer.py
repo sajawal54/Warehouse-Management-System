@@ -28,3 +28,4 @@ class StockTransferResponse(BaseModel):
 
     class Config:
         from_attributes = True
+        

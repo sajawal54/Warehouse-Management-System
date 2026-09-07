@@ -2,11 +2,12 @@ from fastapi import APIRouter, Depends , HTTPException
 from sqlalchemy.orm import Session
 from app.core.database import get_db
 from app.services.reconciliation import run_reconciliation
+from app.core.security import require_manager
 
 router = APIRouter()
 
 @router.post("/run-reconciliation", summary="Run Reconciliation Engine")
-def run_reconciliation_endpoint(db: Session = Depends(get_db)):
+def run_reconciliation_endpoint(db: Session = Depends(get_db), current_user=Depends(require_manager)):
     try:
         run_reconciliation(db)
         return {"message": "Reconciliation process completed successfully."}

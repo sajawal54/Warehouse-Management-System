@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 from typing import Optional
 from app.core.database import get_db
-from app.core.security import get_current_user
+from app.core.security import require_manager
 from app.models.tables import AuditLog
 from app.schemas.audit import AuditLogResponse
 
@@ -15,7 +15,7 @@ def get_audit_logs(
     user_id: Optional[int] = Query(None),
     limit: int = Query(50),
     db: Session = Depends(get_db),
-    current_user=Depends(get_current_user)
+    current_user=Depends(require_manager)
 ):
     query = db.query(AuditLog)
 

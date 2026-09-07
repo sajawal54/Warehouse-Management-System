@@ -1,71 +1,46 @@
 import axios from 'axios';
-import { getAccessToken, setAuthData, clearTokens } from './tokenSlice';
+import api from '../api/axios';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000';
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
-const api = axios.create({
-    baseURL: API_BASE_URL,
-    headers: {
-        'Content-Type': 'application/json',
-    },
-});
+export const authService = {
+  login: async (email, password) => {
+    const formData = new FormData();
+    formData.append('username', email);
+    formData.append('password', password);
 
-// Request Interceptor for Token Injection
-api.interceptors.request.use(
-    (config) => {
-        const token = getAccessToken();
-        if (token) {
-            config.headers.Authorization = `Bearer ${token}`;
-        }
-        return config;
-    },
-    (error) => Promise.reject(error)
-);
+    const response = await axios.post(`${API_URL}/auth/login`, formData, {
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    });
+    return response.data;
+  },
 
-// Register API
-export const registerUser = async (userData) => {
-    try {
-        const response = await api.post('/auth/register', userData);
-        return response.data;
-    } catch (error) {
-        throw error.response?.data?.detail || 'Registration failed';
-    }
+  register: async (userData) => {
+    const response = await axios.post(`${API_URL}/auth/register`, userData);
+    return response.data;
+  },
+
+  logout: () => {
+    localStorage.removeItem('access_token');
+    localStorage.removeItem('refresh_token');
+    localStorage.removeItem('user');
+  },
+
+  // ✅ Get current user from backend
+  getCurrentUser: async () => {
+    const response = await api.get('/auth/me');
+    return response.data;
+  },
+
+  // ✅ Update profile
+  updateProfile: async (data) => {
+    const response = await api.put('/auth/profile', data);
+    return response.data;
+  },
+
+  // ✅ Change password
+  changePassword: async (data) => {
+    const response = await api.post('/auth/change-password', data);
+    return response.data;
+  },
 };
-
-// Login API (Role handling ke sath updated)
-export const loginUser = async (usernameOrEmail, password) => {
-    try {
-        const formData = new URLSearchParams();
-        formData.append('username', usernameOrEmail);
-        formData.append('password', password);
-
-        const response = await api.post('/auth/login', formData, {
-            headers: {
-                'Content-Type': 'application/x-www-form-urlencoded',
-            },
-        });
-
-        // Agar response mein access token maujood hai
-        if (response.data.access_token) {
-            // Backend se aane wala role extract karein (misal ke tor par response.data.role ya response.data.user?.role)
-            const userRole = response.data.role || response.data.user_role || 'viewer';
-            
-            // Tokens aur Role dono ek sath save ho jayenge
-            setAuthData(
-                response.data.access_token, 
-                response.data.refresh_token, 
-                userRole
-            );
-        }
-        return response.data;
-    } catch (error) {
-        throw error.response?.data?.detail || 'Invalid credentials or login failed';
-    }
-};
-
-export const logoutUser = () => {
-    clearTokens();
-    window.location.href = '/login';
-};
-
-export default api;

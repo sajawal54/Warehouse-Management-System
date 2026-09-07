@@ -31,7 +31,6 @@ class SalesOrderResponse(BaseModel):
     from_attributes = True
     
 class FulfillSalesOrderRequest(BaseModel):
-    sales_order_id: int
     product_id: int
     shipped_qty: int
     

@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from app.core.database import engine
 from fastapi.middleware.cors import CORSMiddleware
 from app.models.tables import Base
-from app.routers import auth, products, vendors, warehouse, inventory, purchase, sales, adjustments, audit, stock_transfer, reconciliation, ai_router
+from app.routers import auth, products, vendors, warehouse, inventory, purchase, sales, adjustments, audit, stock_transfer, reconciliation, ai_router , admin
 
 app = FastAPI()
 app.add_middleware(
@@ -13,6 +13,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 Base.metadata.create_all(bind=engine)
+
+app.include_router(admin.router, prefix="/admin", tags=["Admin"])
 
 app.include_router(auth.router, prefix="/auth", tags=["Authentication"])
 app.include_router(products.router, prefix="/products", tags=["Products"])
@@ -26,4 +28,6 @@ app.include_router(audit.router, prefix="/audit", tags=["Audit Logs"])
 app.include_router(stock_transfer.router, prefix="/stock_transfer", tags=["Stock Transfer"])
 app.include_router(reconciliation.router, prefix="/reconciliation", tags=["Reconciliation"])
 app.include_router(ai_router.router, prefix="/ai", tags=["AI Dashboard & Chat"])
+
+
 

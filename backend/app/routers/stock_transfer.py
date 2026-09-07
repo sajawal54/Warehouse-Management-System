@@ -5,14 +5,14 @@ from app.schemas.stock_transfer import StockTransferCreate, StockTransferRespons
 from app.core.database import get_db
 from app.core.security import get_current_user
 from app.services.audit_service import create_audit_log
-
+from app.core.security import require_viewer , require_admin , require_staff , require_manager
 router = APIRouter()
 
-@router.post("/stock_transfers/", response_model=StockTransferResponse)
+@router.post("/", response_model=StockTransferResponse)
 def create_stock_transfer(
     stock_transfer: StockTransferCreate,
     db: Session = Depends(get_db),
-    current_user=Depends(get_current_user)
+    current_user=Depends(require_staff)
 ):
     source_warehouse = db.query(Warehouse).filter(
         Warehouse.id == stock_transfer.source_warehouse_id
@@ -82,11 +82,11 @@ def create_stock_transfer(
     db.commit()
     return new_stock_transfer
 
-@router.post("/stock_transfers/{transfer_id}/complete")
+@router.post("/{transfer_id}/complete")
 def complete_stock_transfer(
     transfer_id: int,
     db: Session = Depends(get_db),
-    current_user=Depends(get_current_user)
+    current_user=Depends(require_staff)
 ):
     stock_transfer = db.query(StockTransfer).filter(
         StockTransfer.id == transfer_id
@@ -184,10 +184,11 @@ def complete_stock_transfer(
     return stock_transfer
 
 
-@router.get("/stock_transfers/{transfer_id}", response_model=StockTransferResponse)
+@router.get("/{transfer_id}", response_model=StockTransferResponse)
 def get_stock_transfer(
     transfer_id: int,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user=Depends(require_viewer)
 ):
     stock_transfer = db.query(StockTransfer).filter(
         StockTransfer.id == transfer_id
@@ -202,8 +203,8 @@ def get_stock_transfer(
     return stock_transfer
 
 
-@router.get("/stock_transfers", response_model=list[StockTransferResponse])
-def list_stock_transfers(db: Session = Depends(get_db)):
+@router.get("/", response_model=list[StockTransferResponse])
+def list_stock_transfers(db: Session = Depends(get_db), current_user=Depends(require_viewer)):
     stock_transfers = db.query(StockTransfer).all()
 
     return stock_transfers

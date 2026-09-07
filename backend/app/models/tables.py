@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime , timezone
 from sqlalchemy import Column, String, Integer, Boolean, DateTime, ForeignKey, Float 
 from app.core.database import Base 
 from sqlalchemy.orm import relationship
@@ -44,7 +44,7 @@ class StockBalance(Base):
     product_id = Column(Integer, ForeignKey("products.id"))
     warehouse_id = Column(Integer, ForeignKey("warehouses.id"))
     quantity = Column(Integer, default=0)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    updated_at =Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc),  onupdate=lambda: datetime.now(timezone.utc))
 
 class PurchaseOrder(Base):
     __tablename__ = "purchase_orders"
@@ -118,7 +118,7 @@ class InventoryMovement(Base):
     reference_type = Column(String)
     reference_id = Column(Integer)
     created_by = Column(String)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at =  Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
 
 class AuditLog(Base):
     __tablename__ = "audit_logs"
@@ -129,7 +129,7 @@ class AuditLog(Base):
     entity_id = Column(Integer)
     before = Column(String)
     after = Column(String)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at =  Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
 
 class AIAnalysisResult(Base):
     __tablename__ = "ai_analysis_results"
@@ -140,4 +140,4 @@ class AIAnalysisResult(Base):
     explanation = Column(String)
     possible_cause = Column(String)
     recommendation = Column(String)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at =  Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))

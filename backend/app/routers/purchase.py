@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, status, HTTPException
 from sqlalchemy.orm import Session
 from app.core.database import get_db
-from app.core.security import get_current_user
+from app.core.security import require_manager, require_staff, require_viewer
 from app.models.tables import PurchaseOrder, PurchaseOrderItem, InventoryMovement, StockBalance
 from app.schemas.purchase import PurchaseOrderCreate, PurchaseOrderResponse, ReceivedProductItem, ReceivePurchaseOrderRequest
 from app.services.audit_service import create_audit_log
@@ -12,7 +12,7 @@ router = APIRouter()
 def create_purchase_order(
     purchase: PurchaseOrderCreate,
     db: Session = Depends(get_db),
-    current_user=Depends(get_current_user)
+    current_user=Depends(require_staff)
 ):
     new_order = PurchaseOrder(
         vendor_id=purchase.vendor_id,
@@ -68,7 +68,7 @@ def receive_purchase_order(
     purchase_order_id: int,
     receive_data: ReceivePurchaseOrderRequest,
     db: Session = Depends(get_db),
-    current_user=Depends(get_current_user)
+    current_user=Depends(require_staff)
 ):
     order = db.query(PurchaseOrder).filter(
         PurchaseOrder.id == purchase_order_id
@@ -121,6 +121,7 @@ def receive_purchase_order(
             )
 
         order_item.received_qty = new_total_received
+
 
         movement = InventoryMovement(
             product_id=item.product_id,
@@ -186,7 +187,7 @@ def receive_purchase_order(
 
 
 @router.get("/", response_model=list[PurchaseOrderResponse])
-def get_all_orders(db: Session = Depends(get_db)):
+def get_all_orders(db: Session = Depends(get_db), current_user=Depends(require_viewer)):
     orders = db.query(PurchaseOrder).all()
 
     return orders
@@ -195,7 +196,8 @@ def get_all_orders(db: Session = Depends(get_db)):
 @router.get("/{purchase_order_id}", response_model=PurchaseOrderResponse)
 def get_order_by_id(
     purchase_order_id: int,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user=Depends(require_viewer)
 ):
     order = db.query(PurchaseOrder).filter(
         PurchaseOrder.id == purchase_order_id
@@ -214,7 +216,7 @@ def get_order_by_id(
 def submit_purchase_order(
     purchase_order_id: int,
     db: Session = Depends(get_db),
-    current_user=Depends(get_current_user)
+    current_user=Depends(require_manager)
 ):
     order = db.query(PurchaseOrder).filter(
         PurchaseOrder.id == purchase_order_id

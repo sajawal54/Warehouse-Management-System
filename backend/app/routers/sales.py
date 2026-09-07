@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from app.core.database import get_db
-from app.core.security import get_current_user
+from app.core.security import require_staff, require_viewer , require_manager
 from app.schemas.sales import SalesOrderCreate, SalesOrderResponse, FulfillSalesOrderRequest
 from app.models.tables import SalesOrder, SalesOrderItem, StockBalance, InventoryMovement
 from app.services.audit_service import create_audit_log
@@ -12,7 +12,7 @@ router = APIRouter()
 def create_sales_order(
     sales_order: SalesOrderCreate,
     db: Session = Depends(get_db),
-    current_user=Depends(get_current_user)
+    current_user=Depends(require_staff)
 ):
     new_sales_order = SalesOrder(
         customer_ref=sales_order.customer_ref,
@@ -66,7 +66,7 @@ def fulfill_sales_order(
     sales_id: int,
     fulfill_request: FulfillSalesOrderRequest,
     db: Session = Depends(get_db),
-    current_user=Depends(get_current_user)
+    current_user=Depends(require_staff)
 ):
     sales_order = db.query(SalesOrder).filter(
         SalesOrder.id == sales_id
@@ -167,7 +167,7 @@ def fulfill_sales_order(
 
 
 @router.get("/sales_orders", response_model=list[SalesOrderResponse])
-def get_sales_orders(db: Session = Depends(get_db)):
+def get_sales_orders(db: Session = Depends(get_db), current_user=Depends(require_viewer)):
     sales_orders = db.query(SalesOrder).all()
 
     return sales_orders
@@ -176,7 +176,8 @@ def get_sales_orders(db: Session = Depends(get_db)):
 @router.get("/sales_orders/{sales_id}", response_model=SalesOrderResponse)
 def get_sales_order(
     sales_id: int,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user=Depends(require_viewer)
 ):
     sales_order = db.query(SalesOrder).filter(
         SalesOrder.id == sales_id
@@ -195,7 +196,7 @@ def get_sales_order(
 def submit_sales_order(
     sales_id: int,
     db: Session = Depends(get_db),
-    current_user=Depends(get_current_user)
+    current_user=Depends(require_manager)
 ):
     sales_order = db.query(SalesOrder).filter(
         SalesOrder.id == sales_id
@@ -243,7 +244,7 @@ def submit_sales_order(
 def cancel_sales_order(
     sales_id: int,
     db: Session = Depends(get_db),
-    current_user=Depends(get_current_user)
+    current_user=Depends(require_manager)
 ):
     sales_order = db.query(SalesOrder).filter(
         SalesOrder.id == sales_id

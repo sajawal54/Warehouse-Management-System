@@ -4,7 +4,7 @@ from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
-from app.core.security import get_current_user
+from app.core.security import require_manager, require_viewer
 from app.models.tables import (
     AIAnalysisResult,
     InventoryMovement,
@@ -46,7 +46,7 @@ def get_ai_dashboard_summary(
         description="Filter low-stock items by warehouse",
     ),
     db: Session = Depends(get_db),
-    current_user=Depends(get_current_user),
+    current_user=Depends(require_viewer),
 ):
     low_stock_query = db.query(StockBalance)
 
@@ -149,7 +149,7 @@ def get_ai_dashboard_summary(
 )
 def run_inventory_reconciliation(
     db: Session = Depends(get_db),
-    current_user=Depends(get_current_user),
+    current_user=Depends(require_manager),
 ):
     stock_pairs = db.query(StockBalance).all()
     analyzed_count = 0
@@ -248,7 +248,7 @@ def run_inventory_reconciliation(
 def ai_chat_endpoint(
     payload: ChatRequest,
     db: Session = Depends(get_db),
-    current_user=Depends(get_current_user),
+    current_user=Depends(require_viewer),
 ):
     try:
         product_query = db.query(Product)

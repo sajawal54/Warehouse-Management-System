@@ -5,7 +5,7 @@ from app.models.tables import Product
 from app.core.database import get_db
 from app.core.security import get_current_user
 from app.services.audit_service import create_audit_log
-
+from app.core.security import require_admin , require_manager , require_staff , require_viewer
 
 router = APIRouter()
 
@@ -14,7 +14,7 @@ router = APIRouter()
 def create_products(
     product: ProductCreate,
     db: Session = Depends(get_db),
-    current_user=Depends(get_current_user)
+    current_user=Depends(require_manager)
 ):
     existing_product = db.query(Product).filter(
         Product.sku == product.sku
@@ -64,7 +64,7 @@ def create_products(
 
 
 @router.get("/get", response_model=list[ProductResponse])
-def get_products(db: Session = Depends(get_db)):
+def get_products(db: Session = Depends(get_db) , current_user=Depends(require_viewer)):
     products = db.query(Product).filter(
         Product.is_active == True
     ).all()
@@ -75,7 +75,8 @@ def get_products(db: Session = Depends(get_db)):
 @router.get("/get/{product_id:int}", response_model=ProductResponse)
 def get_by_id(
     product_id: int,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user=Depends(require_viewer)
 ):
     product = db.query(Product).filter(
         Product.id == product_id,
@@ -96,7 +97,7 @@ def update_product(
     product_id: int,
     product: ProductUpdate,
     db: Session = Depends(get_db),
-    current_user=Depends(get_current_user)
+    current_user=Depends(require_manager)
 ):
     find_product = db.query(Product).filter(
         Product.id == product_id,
@@ -177,7 +178,7 @@ def update_product(
 def delete_product(
     product_id: int,
     db: Session = Depends(get_db),
-    current_user=Depends(get_current_user)
+    current_user=Depends(require_admin)
 ):
     product = db.query(Product).filter(
         Product.id == product_id,

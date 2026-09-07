@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from app.models.tables import StockAdjustment, Warehouse, StockBalance, InventoryMovement , Product
 from app.core.database import get_db
-from app.core.security import get_current_user
+from app.core.security import require_staff , require_viewer
 from app.schemas.adjustments import StockAdjustmentCreate , StockAdjustmentResponse
 from app.services.audit_service import create_audit_log
 
@@ -14,7 +14,7 @@ router = APIRouter()
 def create_stock_adjustment(
     stock_adjustment: StockAdjustmentCreate,
     db: Session = Depends(get_db),
-    current_user=Depends(get_current_user)
+    current_user=Depends(require_staff)
 ):
     warehouse = db.query(Warehouse).filter(
         Warehouse.id == stock_adjustment.warehouse_id
@@ -100,3 +100,33 @@ def create_stock_adjustment(
     db.refresh(new_stock_adjustment)
 
     return new_stock_adjustment
+
+
+
+
+@router.get("/stock_adjustments/", response_model=list[StockAdjustmentResponse])
+def get_stock_adjustments(
+    db: Session = Depends(get_db),
+    current_user=Depends(require_viewer)
+):
+    adjustments = db.query(StockAdjustment).all()
+    return adjustments
+
+
+@router.get("/stock_adjustments/{adjustment_id}", response_model=StockAdjustmentResponse)
+def get_stock_adjustment_by_id(
+    adjustment_id: int,
+    db: Session = Depends(get_db),
+    current_user=Depends(require_viewer)
+):
+    adjustment = db.query(StockAdjustment).filter(
+        StockAdjustment.id == adjustment_id
+    ).first()
+    
+    if not adjustment:
+        raise HTTPException(
+            status_code=404,
+            detail="Stock adjustment not found"
+        )
+    
+    return adjustment

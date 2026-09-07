@@ -3,10 +3,14 @@ from sqlalchemy.orm import Session
 from fastapi.security import OAuth2PasswordRequestForm 
 from app.core.database import get_db
 from app.models.tables import User
-from app.core.security import verify_password, create_access_token, create_refresh_token, hash_password
-from app.schemas.auth import UserCreate, UserResponse, Token
+from app.core.security import verify_password, create_access_token, create_refresh_token, hash_password, require_viewer
+from app.schemas.auth import UserCreate, UserResponse, Token , PasswordChange , UserUpdate
 
 router = APIRouter()
+
+@router.get("/me", response_model=UserResponse)
+def get_current_user_profile(current_user=Depends(require_viewer)):
+  return current_user
 
 @router.post("/register", response_model=UserResponse)
 def register_user(user: UserCreate, db: Session = Depends(get_db)): 
@@ -20,7 +24,7 @@ def register_user(user: UserCreate, db: Session = Depends(get_db)):
   new_user = User(
     username = user.username,
     email=user.email,
-    role="staff",
+    role="viewer",
     password_hash=hashed_password
   )
   
@@ -45,3 +49,44 @@ def login_user(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = D
     "refresh_token": refresh_token,
     "token_type": "bearer"
   }
+  
+  
+@router.put("/profile", response_model=UserResponse)
+def update_profile(
+    profile_data: UserUpdate,
+    db: Session = Depends(get_db),
+    current_user=Depends(require_viewer)
+):
+    user = db.query(User).filter(User.id == current_user.id).first()
+    
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    # Only update username (email is read-only)
+    if profile_data.username:
+        user.username = profile_data.username
+    
+    db.commit()
+    db.refresh(user)
+    
+    return user
+
+@router.post("/change-password")
+def change_password(
+    password_data: PasswordChange,
+    db: Session = Depends(get_db),
+    current_user=Depends(require_viewer)
+):
+    user = db.query(User).filter(User.id == current_user.id).first()
+    
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    if not verify_password(password_data.current_password, user.password_hash):
+        raise HTTPException(status_code=400, detail="Current password is incorrect")
+    
+    user.password_hash = hash_password(password_data.new_password)
+    
+    db.commit()
+    
+    return {"message": "Password changed successfully"}

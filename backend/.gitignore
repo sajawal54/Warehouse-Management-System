@@ -30,3 +30,8 @@ htmlcov/
 # Local database files
 *.db
 *.sqlite3
+
+# Seed files (contains test credentials)
+scripts/seed_users.py
+scripts/seed_superuser.py
+*.seed.py

@@ -5,7 +5,7 @@ from app.schemas.vendors import VendorCreate, VendorResponse, VendorUpdate
 from app.core.database import get_db
 from app.core.security import get_current_user
 from app.services.audit_service import create_audit_log
-
+from app.core.security import require_admin , require_manager , require_staff , require_viewer
 router = APIRouter()
 
 
@@ -13,7 +13,7 @@ router = APIRouter()
 def create_vendor(
     vendor: VendorCreate,
     db: Session = Depends(get_db),
-    current_user=Depends(get_current_user)
+    current_user=Depends(require_manager)
 ):
     existing_vendor = db.query(Vendor).filter(Vendor.name == vendor.name).first()
 
@@ -52,14 +52,14 @@ def create_vendor(
 
 
 @router.get("/get", response_model=list[VendorResponse])
-def get_vendors(db: Session = Depends(get_db)):
+def get_vendors(db: Session = Depends(get_db) , current_user = Depends(require_viewer)):
     vendors = db.query(Vendor).filter(Vendor.is_active == True).all()
 
     return vendors
 
 
 @router.get("/get/{vendor_id}", response_model=VendorResponse)
-def get_vendor_by_id(vendor_id, db: Session = Depends(get_db)):
+def get_vendor_by_id(vendor_id, db: Session = Depends(get_db) , current_user = Depends(require_viewer)):
     vendor = db.query(Vendor).filter(
         Vendor.id == vendor_id,
         Vendor.is_active == True
@@ -76,7 +76,7 @@ def update_vendor(
     vendor_id: int,
     vendor: VendorUpdate,
     db: Session = Depends(get_db),
-    current_user=Depends(get_current_user)
+    current_user=Depends(require_manager)
 ):
     find_vendor = db.query(Vendor).filter(
         Vendor.id == vendor_id,
@@ -127,7 +127,7 @@ def update_vendor(
 def delete_vendor(
     vendor_id: int,
     db: Session = Depends(get_db),
-    current_user=Depends(get_current_user)
+    current_user=Depends(require_admin)
 ):
     vendor = db.query(Vendor).filter(
         Vendor.id == vendor_id,

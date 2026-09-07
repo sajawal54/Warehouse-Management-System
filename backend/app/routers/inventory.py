@@ -1,8 +1,8 @@
 from fastapi import Depends, HTTPException, status, APIRouter
 from sqlalchemy.orm import Session
 from app.core.database import get_db
-from app.core.security import get_current_user
-from app.schemas.inventory import StockReceiveCreate
+from app.core.security import require_staff , require_viewer
+from app.schemas.inventory import StockReceiveCreate , InventoryMovementResponse
 from app.models.tables import InventoryMovement, StockBalance, Warehouse, Product
 from app.services.audit_service import create_audit_log
 
@@ -12,7 +12,7 @@ router = APIRouter()
 def receive_stock(
     payload: StockReceiveCreate,
     db: Session = Depends(get_db),
-    current_user=Depends(get_current_user)
+    current_user=Depends(require_staff)
 ):
     product = db.query(Product).filter(
         Product.id == payload.product_id,
@@ -92,3 +92,14 @@ def receive_stock(
     return {
         "message": "Stock Successfully Received"
     }
+    
+    
+@router.get("/movements", response_model=list[InventoryMovementResponse])
+def get_movements(
+    db: Session = Depends(get_db),
+    current_user=Depends(require_viewer)
+):
+    movements = db.query(InventoryMovement).order_by(
+        InventoryMovement.created_at.desc()
+    ).all()
+    return movements
