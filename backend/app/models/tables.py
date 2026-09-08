@@ -141,3 +141,4 @@ class AIAnalysisResult(Base):
     possible_cause = Column(String)
     recommendation = Column(String)
     created_at =  Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+    

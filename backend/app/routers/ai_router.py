@@ -61,7 +61,7 @@ def get_ai_dashboard_summary(
 
     products = (
         db.query(Product)
-        .filter(Product.id.in_(product_ids))
+        .filter(Product.id.in_(product_ids) , Product.is_active == True)
         .all()
         if product_ids
         else []
@@ -123,7 +123,9 @@ def get_ai_dashboard_summary(
         .all()
     )
 
-    total_products = db.query(Product).count()
+    total_products = db.query(Product).filter(
+    Product.is_active == True
+).count()  
 
     negative_inventory_count = (
         db.query(StockBalance)

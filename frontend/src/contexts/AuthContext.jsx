@@ -1,6 +1,7 @@
 import { createContext, useState, useContext, useEffect } from 'react';
 import { authService } from '../services/authService';
 import { tokenUtils } from '../utils/token';
+import axios from '../api/axios';
 
 const AuthContext = createContext();
 
@@ -17,11 +18,47 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const storedUser = tokenUtils.getUser();
-    if (storedUser && tokenUtils.isAuthenticated()) {
-      setUser(storedUser);
-    }
-    setLoading(false);
+    const initAuth = async () => {
+      const storedUser = tokenUtils.getUser();
+      const token = tokenUtils.getAccessToken();
+      
+      if (storedUser && token) {
+        const decoded = tokenUtils.decodeToken(token);
+        if (decoded && decoded.exp) {
+          const expiry = new Date(decoded.exp * 1000);
+          const now = new Date();
+          
+          if (now < expiry) {
+            setUser(storedUser);
+          } else {
+            try {
+              const refreshToken = tokenUtils.getRefreshToken();
+              if (refreshToken) {
+                const response = await axios.post('/auth/refresh', {
+                  refresh_token: refreshToken,
+                });
+                const { access_token, refresh_token } = response.data;
+                tokenUtils.setTokens(access_token, refresh_token);
+                setUser(storedUser);
+              } else {
+                // No refresh token logout
+                tokenUtils.clearTokens();
+                setUser(null);
+              }
+            } catch (error) {
+              // Refresh failed logout
+              tokenUtils.clearTokens();
+              setUser(null);
+            }
+          }
+        } else {
+          setUser(storedUser);
+        }
+      }
+      setLoading(false);
+    };
+
+    initAuth();
   }, []);
 
   const login = async (email, password) => {
@@ -29,27 +66,21 @@ export const AuthProvider = ({ children }) => {
       const response = await authService.login(email, password);
       const { access_token, refresh_token } = response;
 
-      // ✅ FIRST: Set the tokens
       tokenUtils.setTokens(access_token, refresh_token);
       
-      // ✅ SECOND: Decode the token to get user info
       const decoded = tokenUtils.decodeToken(access_token);
       
-      // ✅ THIRD: Create user info from decoded token
       const userInfo = {
         email: decoded.sub,
         role: decoded.role,
         username: decoded.sub?.split('@')[0] || 'User',
       };
 
-      // ✅ Store user info
       tokenUtils.setUser(userInfo);
       setUser(userInfo);
 
-      // ✅ FOURTH: Optionally fetch fresh user data (token is now set)
       try {
         const userData = await authService.getCurrentUser();
-        // ✅ Update with fresh data if needed
         if (userData) {
           const updatedUserInfo = {
             email: userData.email,
@@ -61,7 +92,6 @@ export const AuthProvider = ({ children }) => {
           setUser(updatedUserInfo);
         }
       } catch (err) {
-        // If getCurrentUser fails, we already have user info from token
         console.log('Using token data for user');
       }
 

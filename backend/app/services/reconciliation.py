@@ -1,5 +1,6 @@
 from sqlalchemy.orm import Session
-from app.models.tables import StockBalance, Product, InventoryMovement
+from app.models.tables import StockBalance, Product, InventoryMovement, AIAnalysisResult
+from datetime import datetime
 
 def run_reconciliation(db: Session):
     stock_pairs = db.query(StockBalance.product_id, StockBalance.warehouse_id).all()
@@ -38,8 +39,29 @@ def run_reconciliation(db: Session):
                 "severity": "MEDIUM",
                 "description": f"Actual stock ({actual_balance}) is at or below the reorder point ({product.reorder_point})."
             })
-    
+        
         if issues:
+            # ✅ SAVE TO DATABASE instead of just printing
+            for issue in issues:
+                # Check if this issue already exists (avoid duplicates)
+                existing = db.query(AIAnalysisResult).filter(
+                    AIAnalysisResult.scope == f"reconciliation:{product_id}:{warehouse_id}",
+                    AIAnalysisResult.issue == issue["description"]
+                ).first()
+                
+                if not existing:
+                    analysis_result = AIAnalysisResult(
+                        scope=f"reconciliation:{product_id}:{warehouse_id}",
+                        issue=issue["description"],
+                        severity=issue["severity"],
+                        explanation=f"Reconciliation detected: {issue['description']}",
+                        possible_cause="Stock movement mismatch or data inconsistency.",
+                        recommendation="Review stock movements and adjust balances if needed."
+                    )
+                    db.add(analysis_result)
+            
+            db.commit()
+            
             print(f"Reconciliation Issues for Product ID {product_id} in Warehouse ID {warehouse_id}:")
             for issue in issues:
                 print(f" -> [{issue['issue_type']}] Severity: {issue['severity']} | {issue['description']}")

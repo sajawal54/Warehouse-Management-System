@@ -8,7 +8,8 @@ import {
   RefreshCw, AlertOctagon, TrendingUp, TrendingDown,
   Warehouse, MessageSquare, BarChart3, Clock,
   ArrowUp, ArrowDown, Info, Sparkles, Zap,
-  Users, Box, Eye, ChevronRight , ShoppingCart , ArrowRight , ShoppingBag
+  Users, Box, Eye, ChevronRight, ShoppingCart, ArrowRight, ShoppingBag,
+  Lock  // ✅ Added Lock icon
 } from 'lucide-react';
 
 const AIDashboard = () => {
@@ -19,10 +20,12 @@ const AIDashboard = () => {
   const [refreshing, setRefreshing] = useState(false);
   const [lastUpdated, setLastUpdated] = useState(null);
   const [showAllFindings, setShowAllFindings] = useState(false);
-  // ✅ Add state for low stock items
   const [showAllLowStock, setShowAllLowStock] = useState(false);
 
   const canRunReconciliation = hasRole(['admin', 'manager']);
+  
+  // ✅ Check if user can access quick actions (Viewer cannot)
+  const canAccessActions = hasRole(['admin', 'manager', 'staff']);
 
   const getUsername = () => {
     if (user?.username) {
@@ -119,14 +122,13 @@ const AIDashboard = () => {
     );
   }
 
-  // ✅ Determine how many low stock items to show
   const displayedLowStockItems = showAllLowStock ? lowStockItems : lowStockItems.slice(0, 5);
   const hasMoreLowStock = lowStockItems.length > 5;
 
   return (
     <div className="space-y-6">
       {/* Welcome Banner */}
-      <div className="relative overflow-hidden rounded-2xl bg-linear-to-r from-blue-600 via-purple-600 to-pink-600 p-8 text-white shadow-xl shadow-blue-500/20">
+      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 p-8 text-white shadow-xl shadow-blue-500/20">
         <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl"></div>
         <div className="absolute bottom-0 left-0 w-48 h-48 bg-purple-500/20 rounded-full blur-2xl"></div>
         <div className="relative z-10 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
@@ -161,7 +163,6 @@ const AIDashboard = () => {
             >
               <RefreshCw size={18} className={refreshing || loading ? 'animate-spin' : ''} />
             </button>
-          
           </div>
         </div>
         {lastUpdated && (
@@ -273,57 +274,75 @@ const AIDashboard = () => {
           )}
         </div>
 
-        {/* Quick Actions */}
+        {/* ✅ Quick Actions - With Viewer Lock */}
         <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-6 hover:shadow-xl transition-all duration-300">
           <h3 className="font-semibold text-gray-900 dark:text-white text-lg mb-4 flex items-center gap-2">
             <Zap className="text-yellow-500" size={20} />
             Quick Actions
           </h3>
-          <div className="space-y-3">
-            <button
-              onClick={() => navigate('/receiving')}
-              className="w-full p-4 bg-linear-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white rounded-xl transition-all duration-200 text-left flex items-center gap-3 shadow-lg shadow-emerald-500/20 hover:shadow-xl"
-            >
-              <Package size={20} />
-              <div>
-                <p className="font-semibold">Receive Stock</p>
-                <p className="text-xs text-emerald-100">Add inventory to warehouse</p>
-              </div>
-            </button>
+          
+          {canAccessActions ? (
+            <div className="space-y-3">
+              <button
+                onClick={() => navigate('/receiving')}
+                className="w-full p-4 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white rounded-xl transition-all duration-200 text-left flex items-center gap-3 shadow-lg shadow-emerald-500/20 hover:shadow-xl"
+              >
+                <Package size={20} />
+                <div>
+                  <p className="font-semibold">Receive Stock</p>
+                  <p className="text-xs text-emerald-100">Add inventory to warehouse</p>
+                </div>
+              </button>
 
-            <button
-              onClick={() => navigate('/transfers')}
-              className="w-full p-4 bg-linear-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-xl transition-all duration-200 text-left flex items-center gap-3 shadow-lg shadow-blue-500/20 hover:shadow-xl"
-            >
-              <Warehouse size={20} />
-              <div>
-                <p className="font-semibold">Stock Transfer</p>
-                <p className="text-xs text-blue-100">Move inventory between warehouses</p>
-              </div>
-            </button>
+              <button
+                onClick={() => navigate('/transfers')}
+                className="w-full p-4 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-xl transition-all duration-200 text-left flex items-center gap-3 shadow-lg shadow-blue-500/20 hover:shadow-xl"
+              >
+                <Warehouse size={20} />
+                <div>
+                  <p className="font-semibold">Stock Transfer</p>
+                  <p className="text-xs text-blue-100">Move inventory between warehouses</p>
+                </div>
+              </button>
 
-            <button
-              onClick={() => navigate('/purchases')}
-              className="w-full p-4 bg-linear-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white rounded-xl transition-all duration-200 text-left flex items-center gap-3 shadow-lg shadow-purple-500/20 hover:shadow-xl"
-            >
-              <ShoppingCart size={20} />
-              <div>
-                <p className="font-semibold">Purchase Order</p>
-                <p className="text-xs text-purple-100">Create new purchase order</p>
-              </div>
-            </button>
+              <button
+                onClick={() => navigate('/purchases')}
+                className="w-full p-4 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white rounded-xl transition-all duration-200 text-left flex items-center gap-3 shadow-lg shadow-purple-500/20 hover:shadow-xl"
+              >
+                <ShoppingCart size={20} />
+                <div>
+                  <p className="font-semibold">Purchase Order</p>
+                  <p className="text-xs text-purple-100">Create new purchase order</p>
+                </div>
+              </button>
 
-            <button
-              onClick={() => navigate('/sales')}
-              className="w-full p-4 bg-linear-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white rounded-xl transition-all duration-200 text-left flex items-center gap-3 shadow-lg shadow-orange-500/20 hover:shadow-xl"
-            >
-              <ShoppingBag size={20} />
-              <div>
-                <p className="font-semibold">Sales Order</p>
-                <p className="text-xs text-orange-100">Process customer orders</p>
+              <button
+                onClick={() => navigate('/sales')}
+                className="w-full p-4 bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white rounded-xl transition-all duration-200 text-left flex items-center gap-3 shadow-lg shadow-orange-500/20 hover:shadow-xl"
+              >
+                <ShoppingBag size={20} />
+                <div>
+                  <p className="font-semibold">Sales Order</p>
+                  <p className="text-xs text-orange-100">Process customer orders</p>
+                </div>
+              </button>
+            </div>
+          ) : (
+            <div className="text-center py-8">
+              <div className="w-14 h-14 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center mx-auto mb-3">
+                <Lock size={24} className="text-gray-400 dark:text-gray-500" />
               </div>
-            </button>
-          </div>
+              <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                Quick Actions Unavailable
+              </p>
+              <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
+                Upgrade your role to access these features
+              </p>
+              <p className="text-xs text-gray-400 dark:text-gray-500">
+                Contact your administrator
+              </p>
+            </div>
+          )}
         </div>
       </div>
 

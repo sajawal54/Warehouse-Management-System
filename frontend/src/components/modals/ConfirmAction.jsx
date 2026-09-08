@@ -1,4 +1,4 @@
-
+import React from 'react';
 import { AlertTriangle, X, CheckCircle } from 'lucide-react';
 
 const ConfirmAction = ({ 
@@ -9,7 +9,6 @@ const ConfirmAction = ({
   onCancel,
   type = 'warning' // 'warning' | 'danger' | 'success'
 }) => {
-  // Different styles based on type
   const styles = {
     warning: {
       icon: AlertTriangle,
@@ -41,7 +40,6 @@ const ConfirmAction = ({
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
       <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-md w-full">
         <div className="p-6">
-          {/* Header */}
           <div className="flex items-center justify-between mb-4">
             <div className={`flex items-center gap-3 ${currentStyle.iconColor}`}>
               <Icon size={24} />
@@ -49,33 +47,18 @@ const ConfirmAction = ({
                 {title || 'Confirm Action'}
               </h2>
             </div>
-            <button
-              onClick={onCancel}
-              className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition"
-            >
+            <button onClick={onCancel} className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition">
               <X size={20} className="text-gray-500 dark:text-gray-400" />
             </button>
           </div>
-
-          {/* Message */}
           <div className={`p-4 rounded-lg ${currentStyle.bgColor} border ${currentStyle.borderColor} mb-6`}>
-            <p className="text-gray-700 dark:text-gray-300">
-              {message || 'Are you sure you want to perform this action?'}
-            </p>
+            <p className="text-gray-700 dark:text-gray-300">{message || 'Are you sure?'}</p>
           </div>
-
-          {/* Buttons */}
           <div className="flex flex-col sm:flex-row gap-3 justify-end">
-            <button
-              onClick={onCancel}
-              className="px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition"
-            >
+            <button onClick={onCancel} className="px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition">
               Cancel
             </button>
-            <button
-              onClick={onConfirm}
-              className={`px-4 py-2 text-white rounded-lg transition ${currentStyle.buttonColor}`}
-            >
+            <button onClick={onConfirm} className={`px-4 py-2 text-white rounded-lg transition ${currentStyle.buttonColor}`}>
               {confirmText}
             </button>
           </div>

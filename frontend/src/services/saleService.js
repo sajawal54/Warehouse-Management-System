@@ -21,7 +21,7 @@ export const salesService = {
     return response.data;
   },
 
-  // ✅ FIXED: Correct URL for fulfill
+
   fulfill: async (id, data) => {
     const response = await api.post(`/sales/sales-orders/${id}/fulfill`, data);
     return response.data;

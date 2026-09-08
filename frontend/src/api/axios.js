@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { tokenUtils } from '../utils/token';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
@@ -32,15 +33,30 @@ api.interceptors.response.use(
 
       try {
         const refreshToken = localStorage.getItem('refresh_token');
-        if (!refreshToken) throw new Error('No refresh token');
+        if (!refreshToken) {
+          throw new Error('No refresh token');
+        }
 
         const response = await axios.post(`${API_URL}/auth/refresh`, {
           refresh_token: refreshToken,
         });
 
         const { access_token, refresh_token } = response.data;
-        localStorage.setItem('access_token', access_token);
-        localStorage.setItem('refresh_token', refresh_token);
+        
+        if (access_token && refresh_token) {
+          localStorage.setItem('access_token', access_token);
+          localStorage.setItem('refresh_token', refresh_token);
+        
+          const decoded = tokenUtils.decodeToken(access_token);
+          if (decoded) {
+            const userInfo = {
+              email: decoded.sub,
+              role: decoded.role,
+              username: decoded.sub?.split('@')[0] || 'User',
+            };
+            localStorage.setItem('user', JSON.stringify(userInfo));
+          }
+        }
 
         originalRequest.headers.Authorization = `Bearer ${access_token}`;
         return api(originalRequest);

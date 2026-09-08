@@ -1,9 +1,10 @@
-from fastapi import APIRouter, Depends, HTTPException, status  
+from fastapi import APIRouter, Body, Depends, HTTPException, status  
+from jose import JWTError, jwt
 from sqlalchemy.orm import Session 
 from fastapi.security import OAuth2PasswordRequestForm 
 from app.core.database import get_db
 from app.models.tables import User
-from app.core.security import verify_password, create_access_token, create_refresh_token, hash_password, require_viewer
+from app.core.security import verify_password, create_access_token, create_refresh_token, hash_password, require_viewer, REFRESH_SECRET_KEY, ALGORITHM
 from app.schemas.auth import UserCreate, UserResponse, Token , PasswordChange , UserUpdate
 
 router = APIRouter()
@@ -49,6 +50,32 @@ def login_user(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = D
     "refresh_token": refresh_token,
     "token_type": "bearer"
   }
+
+
+@router.post("/refresh", response_model=Token)
+def refresh_access_token(refresh_token: str = Body(..., embed=True), db: Session = Depends(get_db)):
+  credentials_exception = HTTPException(
+    status_code=status.HTTP_401_UNAUTHORIZED,
+    detail="Invalid refresh token"
+  )
+
+  try:
+    payload = jwt.decode(refresh_token, REFRESH_SECRET_KEY, algorithms=[ALGORITHM])
+    email = payload.get("sub")
+    if email is None:
+      raise credentials_exception
+  except JWTError:
+    raise credentials_exception
+
+  user = db.query(User).filter(User.email == email, User.is_active == True).first()
+  if user is None:
+    raise credentials_exception
+
+  return {
+    "access_token": create_access_token(data={"sub": user.email, "role": user.role}),
+    "refresh_token": create_refresh_token(data={"sub": user.email}),
+    "token_type": "bearer"
+  }
   
   
 @router.put("/profile", response_model=UserResponse)
@@ -62,7 +89,7 @@ def update_profile(
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     
-    # Only update username (email is read-only)
+  
     if profile_data.username:
         user.username = profile_data.username
     
@@ -90,3 +117,4 @@ def change_password(
     db.commit()
     
     return {"message": "Password changed successfully"}
+  
